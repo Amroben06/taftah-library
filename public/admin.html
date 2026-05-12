@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم — مركز تفتح</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shared.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a href="/index.html" class="nav-brand">
+    <div class="nav-logo">📚</div>
+    <div class="nav-brand-text">
+      <span class="nav-brand-ar">مركز تفتح</span>
+      <span class="nav-brand-fr">لوحة التحكم ⚙️</span>
+    </div>
+  </a>
+  <div class="nav-actions" id="nav-actions"></div>
+</nav>
+
+<div style="padding:100px 5% 60px;">
+
+  <!-- Admin tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:36px;flex-wrap:wrap;">
+    <button class="admin-tab active" id="tab-books"    onclick="showTab('books')">📚 الكتب</button>
+    <button class="admin-tab"        id="tab-addbook"  onclick="showTab('addbook')">➕ إضافة كتاب</button>
+    <button class="admin-tab"        id="tab-users"    onclick="showTab('users')">👥 المستخدمون</button>
+  </div>
+
+  <!-- Books tab -->
+  <div id="pane-books">
+    <div class="section-header-row" style="margin-bottom:24px;">
+      <div class="section-title" style="font-size:24px;">إدارة الكتب</div>
+      <input type="text" id="adminSearch" class="filter-input" style="width:240px;" placeholder="بحث..." oninput="loadAdminBooks()">
+    </div>
+    <div id="adminBooksTable"><div class="loading-spinner"></div></div>
+  </div>
+
+  <!-- Add book tab -->
+  <div id="pane-addbook" style="display:none;">
+    <div class="section-title" style="font-size:24px;margin-bottom:28px;">إضافة كتاب جديد</div>
+    <div style="background:var(--bg-card);border:1px solid var(--border-strong);border-radius:20px;padding:32px;max-width:600px;">
+      <div class="review-fields" style="margin-bottom:14px;">
+        <div><label class="auth-label">عنوان الكتاب *</label><input id="f-title" class="auth-input" placeholder="المناهج التربوية..."></div>
+        <div><label class="auth-label">المؤلف *</label><input id="f-author" class="auth-input" placeholder="د. محمد..."></div>
+      </div>
+      <div class="review-fields" style="margin-bottom:14px;">
+        <div>
+          <label class="auth-label">اللغة *</label>
+          <select id="f-lang" class="filter-select" style="width:100%;height:46px;">
+            <option value="AR">العربية</option>
+            <option value="FR">Français</option>
+            <option value="EN">English</option>
+            <option value="AMZ">ⵜⴰⵎⴰⵣⵉⵖⵜ</option>
+          </select>
+        </div>
+        <div>
+          <label class="auth-label">التصنيف *</label>
+          <select id="f-cat" class="filter-select" style="width:100%;height:46px;">
+            <option value="التربية">التربية</option>
+            <option value="العلوم">العلوم</option>
+            <option value="التاريخ">التاريخ</option>
+            <option value="الجغرافيا">الجغرافيا</option>
+            <option value="الصحة">الصحة</option>
+            <option value="الرياضيات">الرياضيات</option>
+            <option value="الأمازيغية">الأمازيغية</option>
+            <option value="الأدب">الأدب</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="auth-label">الوصف</label>
+        <textarea id="f-desc" class="review-input" style="min-height:90px;width:100%;" placeholder="وصف الكتاب..."></textarea>
+      </div>
+      <div class="review-fields" style="margin-bottom:14px;">
+        <div><label class="auth-label">رمز الغلاف</label><input id="f-emoji" class="auth-input" placeholder="📚" value="📚"></div>
+        <div><label class="auth-label">لون الغلاف (CSS)</label><input id="f-color" class="auth-input" placeholder="linear-gradient(...)"></div>
+      </div>
+      <div class="review-fields" style="margin-bottom:24px;">
+        <div><label class="auth-label">عدد الصفحات</label><input id="f-pages" class="auth-input" type="number" placeholder="200"></div>
+        <div><label class="auth-label">سنة النشر</label><input id="f-year" class="auth-input" type="number" placeholder="2024"></div>
+      </div>
+      <button class="auth-submit" onclick="addBook()">➕ إضافة الكتاب</button>
+    </div>
+  </div>
+
+  <!-- Users tab -->
+  <div id="pane-users" style="display:none;">
+    <div class="section-title" style="font-size:24px;margin-bottom:28px;">إدارة المستخدمين</div>
+    <div id="adminUsersTable"><div class="loading-spinner"></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/js/api.js"></script>
+<script>
+renderNavbar();
+
+// Guard: only admins
+window.addEventListener('load', () => {
+  if (!isAdmin()) {
+    document.body.innerHTML = `<div style="text-align:center;padding:120px 20px;">
+      <div style="font-size:64px;margin-bottom:16px;">🚫</div>
+      <div class="section-title">غير مصرح لك</div>
+      <p style="color:var(--text-muted);margin-top:12px;">هذه الصفحة للمسؤولين فقط</p>
+    </div>`;
+  } else {
+    loadAdminBooks();
+    loadAdminUsers();
+  }
+});
+
+function showTab(name) {
+  ['books','addbook','users'].forEach(t => {
+    document.getElementById('pane-' + t).style.display = t === name ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+}
+
+async function loadAdminBooks() {
+  const el = document.getElementById('adminBooksTable');
+  try {
+    const books = await Books.getAll({ search: document.getElementById('adminSearch')?.value || '' });
+    el.innerHTML = `
+      <div style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead><tr>
+            <th>#</th><th>الكتاب</th><th>المؤلف</th><th>اللغة</th><th>التصنيف</th><th>التحميلات</th><th>التقييم</th><th>إجراءات</th>
+          </tr></thead>
+          <tbody>
+            ${books.map(b => `<tr>
+              <td style="color:var(--text-muted)">${b.id}</td>
+              <td><div style="display:flex;align-items:center;gap:8px;">${b.cover_emoji} <span style="font-weight:600;">${b.title}</span></div></td>
+              <td style="color:var(--text-secondary)">${b.author}</td>
+              <td><span class="book-lang-badge">${b.language}</span></td>
+              <td style="color:var(--text-secondary)">${b.category}</td>
+              <td style="color:var(--text-muted)">${b.downloads}</td>
+              <td style="color:var(--gold)">${(b.rating||0).toFixed(1)} ★</td>
+              <td>
+                <button onclick="deleteBook(${b.id},'${b.title}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Cairo',sans-serif;">حذف</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) { el.innerHTML = '<p style="color:var(--text-muted)">⚠️ ' + e.message + '</p>'; }
+}
+
+async function loadAdminUsers() {
+  const el = document.getElementById('adminUsersTable');
+  try {
+    const users = await Users.getAll();
+    el.innerHTML = `
+      <div style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead><tr><th>#</th><th>الاسم</th><th>البريد</th><th>الدور</th><th>تاريخ التسجيل</th><th>إجراءات</th></tr></thead>
+          <tbody>
+            ${users.map(u => `<tr>
+              <td style="color:var(--text-muted)">${u.id}</td>
+              <td style="font-weight:600;">${u.name}</td>
+              <td style="color:var(--text-secondary)">${u.email}</td>
+              <td><span style="font-size:11px;padding:3px 10px;border-radius:50px;background:${u.role==='admin'?'rgba(201,151,58,0.15)':'rgba(255,255,255,0.06)'};color:${u.role==='admin'?'var(--gold-light)':'var(--text-muted)'};">${u.role==='admin'?'👑 مسؤول':'👤 قارئ'}</span></td>
+              <td style="color:var(--text-muted)">${new Date(u.created_at).toLocaleDateString('ar-MA')}</td>
+              <td>${u.role!=='admin'?`<button onclick="deleteUser(${u.id},'${u.name}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Cairo',sans-serif;">حذف</button>`:'—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) { el.innerHTML = '<p style="color:var(--text-muted)">⚠️ ' + e.message + '</p>'; }
+}
+
+async function addBook() {
+  const data = {
+    title:       document.getElementById('f-title').value.trim(),
+    author:      document.getElementById('f-author').value.trim(),
+    language:    document.getElementById('f-lang').value,
+    category:    document.getElementById('f-cat').value,
+    description: document.getElementById('f-desc').value.trim(),
+    cover_emoji: document.getElementById('f-emoji').value.trim() || '📚',
+    cover_color: document.getElementById('f-color').value.trim() || 'linear-gradient(135deg,#1a2a1a,#2d4a2d)',
+    pages:       parseInt(document.getElementById('f-pages').value) || null,
+    year:        parseInt(document.getElementById('f-year').value) || null,
+  };
+  if (!data.title || !data.author) return showToast('⚠️ العنوان والمؤلف مطلوبان');
+  try {
+    await Books.add(data);
+    showToast('✅ تم إضافة الكتاب بنجاح!');
+    ['f-title','f-author','f-desc','f-pages','f-year'].forEach(id => document.getElementById(id).value = '');
+    loadAdminBooks();
+    showTab('books');
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function deleteBook(id, title) {
+  if (!confirm(`هل تريد حذف "${title}"؟`)) return;
+  try { await Books.delete(id); showToast('🗑 تم الحذف'); loadAdminBooks(); }
+  catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`هل تريد حذف المستخدم "${name}"؟`)) return;
+  try { await Users.deleteUser(id); showToast('🗑 تم حذف المستخدم'); loadAdminUsers(); }
+  catch(e) { showToast('❌ ' + e.message); }
+}
+</script>
+</body>
+</html>

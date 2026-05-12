@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: taftah-library
+    env: node
+    buildCommand: npm install --build-from-source
+    startCommand: node server.js
+    envVars:
+      - key: JWT_SECRET
+        value: taftah_secret_key_2025
+      - key: NODE_ENV
+        value: production

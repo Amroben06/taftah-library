@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>التصنيفات — مركز تفتح</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shared.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a href="/index.html" class="nav-brand">
+    <div class="nav-logo">📚</div>
+    <div class="nav-brand-text">
+      <span class="nav-brand-ar">مركز تفتح</span>
+      <span class="nav-brand-fr">Bibliothèque Numérique</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/books.html">الكتب</a></li>
+    <li><a href="/category.html" style="color:var(--gold-light)">التصنيفات</a></li>
+    <li><a href="/favorites.html">المفضلة</a></li>
+    <li><a href="/about.html">من نحن</a></li>
+  </ul>
+  <div class="nav-actions" id="nav-actions"></div>
+</nav>
+
+<div style="padding:100px 5% 60px;">
+  <div style="margin-bottom:36px;">
+    <div class="section-label">استعرض حسب الموضوع</div>
+    <div class="section-title">التصنيفات</div>
+  </div>
+
+  <!-- Category Cards -->
+  <div id="catsView">
+    <div class="cats-grid" id="catsGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Books in selected category -->
+  <div id="booksView" style="display:none;">
+    <button onclick="showCats()" style="background:none;border:none;color:var(--gold-light);font-size:14px;cursor:pointer;margin-bottom:24px;font-family:'Cairo',sans-serif;">
+      ← العودة للتصنيفات
+    </button>
+    <div style="margin-bottom:28px;">
+      <div class="section-label">التصنيف المختار</div>
+      <div class="section-title" id="selectedCatTitle"></div>
+    </div>
+    <div class="books-grid" id="catBooksGrid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/js/api.js"></script>
+<script>
+const CATS = [
+  { name:'التربية والتعليم', key:'التربية', emoji:'📖', color:'#1a2a1a' },
+  { name:'الأدب والرواية',   key:'الأدب',   emoji:'✍️', color:'#1a1a2e' },
+  { name:'العلوم والطبيعة',  key:'العلوم',  emoji:'🔬', color:'#0a1a2a' },
+  { name:'التاريخ والحضارة', key:'التاريخ', emoji:'📜', color:'#2a1a0a' },
+  { name:'الجغرافيا',        key:'الجغرافيا',emoji:'🌍',color:'#0a2a1a' },
+  { name:'الفنون والثقافة',  key:'الفنون',  emoji:'🎨', color:'#2a0a2a' },
+  { name:'التكنولوجيا',      key:'التكنولوجيا',emoji:'💻',color:'#0a1a2a' },
+  { name:'الصحة والطب',      key:'الصحة',   emoji:'❤️', color:'#2a0a0a' },
+  { name:'الأمازيغية',       key:'الأمازيغية',emoji:'✨',color:'#1a0a2a' },
+  { name:'القانون',          key:'القانون', emoji:'⚖️', color:'#1a1a0a' },
+  { name:'الرياضيات',        key:'الرياضيات',emoji:'📐',color:'#1a2a0a' },
+  { name:'اللغات',           key:'اللغات',  emoji:'🗣️', color:'#0a2a2a' },
+];
+
+renderNavbar();
+
+function renderCats() {
+  const grid = document.getElementById('catsGrid');
+  grid.innerHTML = CATS.map((c,i) => `
+    <a class="cat-card" href="#" onclick="selectCat('${c.key}','${c.name}');return false;"
+       style="animation-delay:${i*0.05}s">
+      <div class="cat-emoji">${c.emoji}</div>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-count" id="count-${c.key}">جاري التحميل...</div>
+    </a>`).join('');
+  // Load counts
+  CATS.forEach(async c => {
+    try {
+      const books = await Books.getAll({ category: c.key });
+      const el = document.getElementById('count-' + c.key);
+      if (el) el.textContent = books.length + ' كتاب';
+    } catch {}
+  });
+  setTimeout(() => document.querySelectorAll('.cat-card').forEach(c => c.classList.add('fade-in')), 50);
+}
+
+async function selectCat(key, name) {
+  document.getElementById('catsView').style.display = 'none';
+  document.getElementById('booksView').style.display = 'block';
+  document.getElementById('selectedCatTitle').textContent = name;
+  const grid = document.getElementById('catBooksGrid');
+  grid.innerHTML = '<div class="loading-spinner"></div>';
+  try {
+    const books = await Books.getAll({ category: key });
+    grid.innerHTML = books.length ? '' : '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:60px 0">لا توجد كتب في هذا التصنيف بعد 📭</p>';
+    books.forEach((book, i) => {
+      const card = document.createElement('div');
+      card.className = 'book-card';
+      card.innerHTML = `
+        <div class="book-cover" style="background:${book.cover_color}">
+          <div class="book-cover-spine"></div>
+          <div class="book-emoji">${book.cover_emoji}</div>
+          <div class="book-cover-title">${book.title}</div>
+        </div>
+        <div class="book-body">
+          <div class="book-title">${book.title}</div>
+          <div class="book-author">${book.author}</div>
+          <div class="book-footer">
+            <span class="book-lang-badge">${book.language}</span>
+            <div class="book-icon-actions">
+              <button class="icon-btn-dark" onclick="event.stopPropagation();showToast('⬇️ جاري التحميل...')">⬇</button>
+            </div>
+          </div>
+        </div>`;
+      setTimeout(() => card.classList.add('fade-in'), i * 60);
+      grid.appendChild(card);
+    });
+  } catch(e) { grid.innerHTML = '<p style="color:var(--text-muted)">⚠️ ' + e.message + '</p>'; }
+}
+
+function showCats() {
+  document.getElementById('catsView').style.display = 'block';
+  document.getElementById('booksView').style.display = 'none';
+}
+
+renderCats();
+</script>
+</body>
+</html>

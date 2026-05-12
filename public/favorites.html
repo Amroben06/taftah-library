@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المفضلة — مركز تفتح</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/shared.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a href="/index.html" class="nav-brand">
+    <div class="nav-logo">📚</div>
+    <div class="nav-brand-text">
+      <span class="nav-brand-ar">مركز تفتح</span>
+      <span class="nav-brand-fr">Bibliothèque Numérique</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/books.html">الكتب</a></li>
+    <li><a href="/category.html">التصنيفات</a></li>
+    <li><a href="/favorites.html" style="color:var(--gold-light)">المفضلة</a></li>
+    <li><a href="/about.html">من نحن</a></li>
+  </ul>
+  <div class="nav-actions" id="nav-actions"></div>
+</nav>
+
+<div style="padding:100px 5% 60px;">
+  <div style="margin-bottom:36px;">
+    <div class="section-label">قائمة القراءة</div>
+    <div class="section-title">كتبي المفضلة 🔖</div>
+  </div>
+  <div id="favContent">
+    <div class="loading-spinner"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="/js/api.js"></script>
+<script>
+renderNavbar();
+
+async function loadFavorites() {
+  const content = document.getElementById('favContent');
+  if (!isLoggedIn()) {
+    content.innerHTML = `
+      <div style="text-align:center;padding:80px 20px;">
+        <div style="font-size:64px;margin-bottom:16px;">🔒</div>
+        <div class="section-title" style="font-size:24px;">يرجى تسجيل الدخول</div>
+        <p style="color:var(--text-muted);margin:12px 0 28px;">سجّل دخولك لتتمكن من حفظ كتبك المفضلة ومتابعة قراءتك</p>
+        <button class="btn-primary" style="height:48px;padding:0 32px;border-radius:10px;font-size:15px;" onclick="window.location='/index.html'">
+          تسجيل الدخول
+        </button>
+      </div>`;
+    return;
+  }
+  try {
+    const books = await Users.getFavorites();
+    if (!books.length) {
+      content.innerHTML = `
+        <div style="text-align:center;padding:80px 20px;">
+          <div style="font-size:64px;margin-bottom:16px;">📭</div>
+          <div class="section-title" style="font-size:24px;">قائمتك فارغة</div>
+          <p style="color:var(--text-muted);margin:12px 0 28px;">ابحث عن كتب تعجبك وأضفها إلى مفضلتك</p>
+          <a href="/books.html" class="btn-primary" style="height:48px;padding:0 32px;border-radius:10px;font-size:15px;display:inline-flex;align-items:center;text-decoration:none;color:#1a0e00;">
+            تصفح الكتب
+          </a>
+        </div>`;
+      return;
+    }
+    const grid = document.createElement('div');
+    grid.className = 'books-grid';
+    books.forEach((book, i) => {
+      const card = document.createElement('div');
+      card.className = 'book-card';
+      card.innerHTML = `
+        <div class="book-cover" style="background:${book.cover_color}">
+          <div class="book-cover-spine"></div>
+          <div class="book-emoji">${book.cover_emoji}</div>
+          <div class="book-cover-title">${book.title}</div>
+        </div>
+        <div class="book-body">
+          <div class="book-title">${book.title}</div>
+          <div class="book-author">${book.author}</div>
+          <div class="book-footer">
+            <span class="book-lang-badge">${book.language}</span>
+            <div class="book-icon-actions">
+              <button class="icon-btn-dark" onclick="event.stopPropagation();removeFav(${book.id},this)" title="إزالة">🗑</button>
+            </div>
+          </div>
+        </div>`;
+      setTimeout(() => card.classList.add('fade-in'), i * 60);
+      grid.appendChild(card);
+    });
+    content.innerHTML = `<p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">${books.length} كتاب محفوظ</p>`;
+    content.appendChild(grid);
+  } catch(e) {
+    content.innerHTML = '<p style="color:var(--text-muted)">⚠️ ' + e.message + '</p>';
+  }
+}
+
+async function removeFav(id, btn) {
+  try {
+    await Users.removeFavorite(id);
+    showToast('🗑 تمت الإزالة من المفضلة');
+    loadFavorites();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+loadFavorites();
+</script>
+</body>
+</html>
