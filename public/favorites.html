@@ -3,39 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>المفضلة — مركز تفتح</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>المفضلة — مركز التفتح الفني و الأدبي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/shared.css">
 </head>
 <body>
-<nav class="navbar" id="navbar">
+
+<nav class="navbar">
   <a href="/index.html" class="nav-brand">
-    <div class="nav-logo">📚</div>
+    <div class="nav-logo">📖</div>
     <div class="nav-brand-text">
-      <span class="nav-brand-ar">مركز تفتح</span>
-      <span class="nav-brand-fr">Bibliothèque Numérique</span>
+      <span class="nav-brand-ar">مركز التفتح الفني و الأدبي</span>
+      <span class="nav-brand-slogan">بالقراءة نرتقي</span>
     </div>
   </a>
   <ul class="nav-links">
     <li><a href="/books.html">الكتب</a></li>
     <li><a href="/category.html">التصنيفات</a></li>
-    <li><a href="/favorites.html" style="color:var(--gold-light)">المفضلة</a></li>
+    <li><a href="/favorites.html" class="active">المفضلة</a></li>
     <li><a href="/about.html">من نحن</a></li>
   </ul>
   <div class="nav-actions" id="nav-actions"></div>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
 </nav>
 
-<div style="padding:100px 5% 60px;">
-  <div style="margin-bottom:36px;">
-    <div class="section-label">قائمة القراءة</div>
-    <div class="section-title">كتبي المفضلة 🔖</div>
-  </div>
-  <div id="favContent">
-    <div class="loading-spinner"></div>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/books.html" onclick="closeMenu()">📚 الكتب</a>
+  <a href="/category.html" onclick="closeMenu()">📂 التصنيفات</a>
+  <a href="/favorites.html" onclick="closeMenu()">🔖 المفضلة</a>
+  <a href="/about.html" onclick="closeMenu()">📄 من نحن</a>
+  <div class="mobile-menu-actions">
+    <button class="btn-ghost" onclick="closeMenu()">دخول</button>
+    <button class="btn-primary" onclick="closeMenu()">تسجيل</button>
   </div>
 </div>
 
+<div class="page-header">
+  <div class="page-label">قائمة القراءة</div>
+  <div class="page-title">🔖 كتبي المفضلة</div>
+</div>
+
+<div style="padding:28px 5%;background:var(--paper);min-height:70vh;">
+  <div id="favContent"><div class="loading-spinner"></div></div>
+</div>
+
 <div class="toast" id="toast"></div>
+
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo-wrap">
+        <div class="nav-logo" style="width:40px;height:40px;font-size:18px;">📖</div>
+        <div><div class="footer-brand-name">مركز التفتح الفني و الأدبي</div><div class="footer-brand-slogan">بالقراءة نرتقي</div></div>
+      </div>
+      <p class="footer-desc">المشروع الوطني للقراءة في نسخته الرقمية.</p>
+    </div>
+    <div class="footer-col"><h4>المكتبة</h4><ul><li><a href="/books.html">جميع الكتب</a></li><li><a href="/category.html">التصنيفات</a></li></ul></div>
+    <div class="footer-col"><h4>اللغات</h4><ul><li><a href="/books.html?lang=AR">العربية</a></li><li><a href="/books.html?lang=FR">Français</a></li></ul></div>
+    <div class="footer-col"><h4>المركز</h4><ul><li><a href="/about.html">من نحن</a></li><li><a href="/profile.html">ملفي</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 مركز التفتح الفني و الأدبي</p>
+    <p style="direction:ltr;">بالقراءة نرتقي 📖</p>
+  </div>
+</footer>
+
 <script src="/js/api.js"></script>
 <script>
 renderNavbar();
@@ -43,33 +75,32 @@ renderNavbar();
 async function loadFavorites() {
   const content = document.getElementById('favContent');
   if (!isLoggedIn()) {
-    content.innerHTML = `
-      <div style="text-align:center;padding:80px 20px;">
-        <div style="font-size:64px;margin-bottom:16px;">🔒</div>
-        <div class="section-title" style="font-size:24px;">يرجى تسجيل الدخول</div>
-        <p style="color:var(--text-muted);margin:12px 0 28px;">سجّل دخولك لتتمكن من حفظ كتبك المفضلة ومتابعة قراءتك</p>
-        <button class="btn-primary" style="height:48px;padding:0 32px;border-radius:10px;font-size:15px;" onclick="window.location='/index.html'">
-          تسجيل الدخول
-        </button>
-      </div>`;
+    content.innerHTML = `<div style="text-align:center;padding:80px 20px;">
+      <div style="font-size:60px;margin-bottom:16px;">🔒</div>
+      <div style="font-family:'Tajawal',sans-serif;font-size:24px;font-weight:800;color:var(--text-dark);margin-bottom:10px;">يرجى تسجيل الدخول</div>
+      <p style="color:var(--text-muted);margin-bottom:28px;">سجّل دخولك لتتمكن من حفظ كتبك المفضلة</p>
+      <a href="/index.html" style="display:inline-block;background:linear-gradient(135deg,var(--blue-bright),var(--blue-glow));color:#fff;padding:12px 32px;border-radius:9px;text-decoration:none;font-weight:700;font-size:15px;">
+        تسجيل الدخول
+      </a>
+    </div>`;
     return;
   }
   try {
     const books = await Users.getFavorites();
     if (!books.length) {
-      content.innerHTML = `
-        <div style="text-align:center;padding:80px 20px;">
-          <div style="font-size:64px;margin-bottom:16px;">📭</div>
-          <div class="section-title" style="font-size:24px;">قائمتك فارغة</div>
-          <p style="color:var(--text-muted);margin:12px 0 28px;">ابحث عن كتب تعجبك وأضفها إلى مفضلتك</p>
-          <a href="/books.html" class="btn-primary" style="height:48px;padding:0 32px;border-radius:10px;font-size:15px;display:inline-flex;align-items:center;text-decoration:none;color:#1a0e00;">
-            تصفح الكتب
-          </a>
-        </div>`;
+      content.innerHTML = `<div style="text-align:center;padding:80px 20px;">
+        <div style="font-size:60px;margin-bottom:16px;">📭</div>
+        <div style="font-family:'Tajawal',sans-serif;font-size:24px;font-weight:800;color:var(--text-dark);margin-bottom:10px;">قائمتك فارغة</div>
+        <p style="color:var(--text-muted);margin-bottom:28px;">أضف كتباً إلى مفضلتك لتجدها هنا</p>
+        <a href="/books.html" style="display:inline-block;background:linear-gradient(135deg,var(--blue-bright),var(--blue-glow));color:#fff;padding:12px 32px;border-radius:9px;text-decoration:none;font-weight:700;font-size:15px;">
+          تصفح الكتب
+        </a>
+      </div>`;
       return;
     }
     const grid = document.createElement('div');
     grid.className = 'books-grid';
+    content.innerHTML = `<p style="color:var(--text-muted);font-size:13px;margin-bottom:18px;">${books.length} كتاب محفوظ</p>`;
     books.forEach((book, i) => {
       const card = document.createElement('div');
       card.className = 'book-card';
@@ -85,27 +116,24 @@ async function loadFavorites() {
           <div class="book-footer">
             <span class="book-lang-badge">${book.language}</span>
             <div class="book-icon-actions">
-              <button class="icon-btn-dark" onclick="event.stopPropagation();removeFav(${book.id},this)" title="إزالة">🗑</button>
+              <button class="icon-btn-dark" onclick="event.stopPropagation();removeFav(${book.id})" title="إزالة" style="color:#e74c3c;">🗑</button>
             </div>
           </div>
         </div>`;
-      setTimeout(() => card.classList.add('fade-in'), i * 60);
+      setTimeout(() => card.classList.add('fade-in'), i * 55);
       grid.appendChild(card);
     });
-    content.innerHTML = `<p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">${books.length} كتاب محفوظ</p>`;
     content.appendChild(grid);
-  } catch(e) {
-    content.innerHTML = '<p style="color:var(--text-muted)">⚠️ ' + e.message + '</p>';
-  }
+  } catch(e) { content.innerHTML = '<p style="color:var(--text-muted)">⚠️ ' + e.message + '</p>'; }
 }
 
-async function removeFav(id, btn) {
-  try {
-    await Users.removeFavorite(id);
-    showToast('🗑 تمت الإزالة من المفضلة');
-    loadFavorites();
-  } catch(e) { showToast('❌ ' + e.message); }
+async function removeFav(id) {
+  try { await Users.removeFavorite(id); showToast('🗑 تمت الإزالة'); loadFavorites(); }
+  catch(e) { showToast('❌ ' + e.message); }
 }
+
+function toggleMenu() { document.getElementById('hamburger').classList.toggle('open'); document.getElementById('mobileMenu').classList.toggle('open'); }
+function closeMenu() { document.getElementById('hamburger').classList.remove('open'); document.getElementById('mobileMenu').classList.remove('open'); }
 
 loadFavorites();
 </script>
